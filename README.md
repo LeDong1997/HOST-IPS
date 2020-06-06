@@ -1,2 +1,71 @@
 # HOST-IPS
 Building Host based IPS for Linux and Windows
+#
+# Windows
+
+## Setup environment
+This project using `Python 3.8.1` on Windows 10 64 bit
+
+About IDE and Editor: Pycharm, Visual Studio Code, Sublime Text 3
+
+### Create Virtual Environment
+`> pip install virtualenv`
+
+`> cd Host-IPS`
+
+`> virtualenv venv`
+
+Run project in virtual environment
+
+`> .\venv\Scripts\activate`
+
+`> python demo.py`
+
+Exit project in virtual environment
+
+`> .\venv\Scripts\deactivate`
+
+### On Visual Studio Code
+
+The message `Error: Cannot be loaded because running scripts is disabled on this system.`
+
+To fix the error, run the command below
+
+`> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process`
+
+Back to step create virtual environment
+
+## Install library for project
+Run project in virtual environment
+
+`> pip install -r requirements_windows.txt`
+
+#
+# Linux
+
+## Setup environment
+This project using `Python 3.6` on Ubuntu 18.04-LTS 64 bit
+
+About IDE and Editor: Pycharm, Visual Studio Code, Sublime Text 3
+
+### Create Virtual Environment
+`$ pip install virtualenv`
+
+`$ cd Host-IPS`
+
+`$ virtualenv venv`
+
+Run project in virtual environment
+
+`$ source /venv/bin/activate`
+
+`$ python demo.py`
+
+Exit project in virtual environment
+
+`$ deactivate`
+
+## Install library for project
+Run project in virtual environment
+
+`$ pip install -r requirements_linux.txt`
