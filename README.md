@@ -23,7 +23,7 @@ Run project in virtual environment
 
 Exit project in virtual environment
 
-`> .\venv\Scripts\deactivate`
+`> .\venv\Scripts\deactivate.bat`
 
 ### On Visual Studio Code
 
