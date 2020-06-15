@@ -78,7 +78,7 @@ def tryLookupKey(path, hkey):
         return ERROR_CODE
 
 
-# conver tupe to dictionary by use name as key
+# convert tuple to dictionary by use name as key
 def fromTupeToDic(src):
     if src is None or len(src) == 0:
         return {}

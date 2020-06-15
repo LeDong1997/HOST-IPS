@@ -1,6 +1,5 @@
 import sys
 import json
-from datetime import datetime
 from codes.systems.hash_func import *
 from codes.systems.file_xml_func import *
 from codes.systems.file_csv_func import *
@@ -234,10 +233,10 @@ def main_integrity():
             # Scan integrity for eacch sys_check_object for system
             # Example: demo_integrity.py -s "test.txt" file[0] / directory [1] / registry[3]
             elif argv[1] == '-s':
-                res, msg = scan_integrity_object(argv[2], argv[3])
+                result, msg = scan_integrity_object(argv[2], argv[3])
                 # alertList = get_alert_list()
-                success = res == 0
-                if res != 0:
+                success = result == 0
+                if result != 0:
                     print(json.dumps({'result': success, 'error_msg': msg}))
                 else:
                     print(json.dumps({'result': success, 'msg': msg}))
