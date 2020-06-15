@@ -168,8 +168,7 @@ def insert_log(delList, updateList, insert_list, scan_time):
     iList = []
     for reg in updateList:
         iList.append((None, scan_time, VALUE_CHANGE, reg[1]))
-    ret = insert_many_registry_log(iList)
-    print(ret)
+    insert_many_registry_log(iList)
     # if(ret == SUCCESS_CODE):
     #     db_print("Update log update success")
     # db_print(iList)
@@ -312,7 +311,9 @@ def scan_registry_key(path_registry, current_time):
     if ret != ERROR_CODE and insert_alert_flag is False:
         update_state_sys_check_object_by_id(info_sys_check[0])
 
-    return SUCCESS_CODE, 'Done check integrity.'
+    msg = 'Done check integrity for registry.'
+    print(msg)
+    return SUCCESS_CODE, msg
 
 
 def scan(registry, path_key):

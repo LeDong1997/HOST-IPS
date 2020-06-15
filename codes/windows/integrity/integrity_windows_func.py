@@ -12,6 +12,7 @@ def scan_file(path_file, current_time):
     print('###\nStarting check integrity for file ...')
 
     error_msg = 'The error connect to database.'
+    msg = 'Done check integrity for file.'
     info_sys_check = get_info_sys_check_object(FILE_TYPE, path_file)
 
     if info_sys_check == ERROR_CODE:
@@ -42,7 +43,8 @@ def scan_file(path_file, current_time):
 
             if result == ERROR_CODE:
                 return ERROR_CODE, error_msg
-        return SUCCESS_CODE, 'Done check integrity.'
+        print(msg)
+        return SUCCESS_CODE, msg
 
     # file exist
     insert_alert_flag = info_sys_check[3] != SYS_CHECK_OBJECT_NEW
@@ -73,7 +75,8 @@ def scan_file(path_file, current_time):
             if result == ERROR_CODE:
                 return ERROR_CODE, error_msg
             print(CHANGE_FILE_MSG + path_file)
-    return SUCCESS_CODE, 'Done check integrity.'
+    print(msg)
+    return SUCCESS_CODE, msg
 
 
 def compare_state(all_file, parent_dir, list_file, current_time, key, insert_alert_flag=True):
@@ -328,8 +331,7 @@ def main_integrity():
                     return SUCCESS_CODE
                 else:
                     return usage_integrity_func()
-        test_registry()
-        # return usage_integrity_func()
+        return usage_integrity_func()
     except Exception as e:
         print(e)
         return ERROR_CODE
