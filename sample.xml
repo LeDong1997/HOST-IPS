@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<check_list>
+    <folder_check>C:\Users\Cu Lee\Desktop\Test\Lib\site-packages\pip\_internal\vcs</folder_check>
+    <file_check>C:\Users\Cu Lee\Desktop\Test\Lib\site-packages\pip\_internal\download.py</file_check>
+    <file_check>C:\Users\Cu Lee\Desktop\Test\Lib\site-packages\pip\_internaly</file_check>
+    <windows_registry>HKEY_LOCAL_MACHINE\Software\Classes\batfile</windows_registry>
+</check_list>

@@ -8,6 +8,8 @@ DATA_BLOCK_SIZE = 32768
 ERROR_CODE = -1
 SUCCESS_CODE = 0
 
+ACCESS_DENIED_CODE = 5
+
 # Define operating system platform
 UNKNOWN_PLATFORM = -1
 WINDOWS_PLATFORM = 0
@@ -75,3 +77,10 @@ SYS_CHECK_OBJECT_IGNORE = 1
 
 SYS_CHECK_OBJECT_XML_FILE = 'xml'
 SYS_CHECK_OBJECT_CSV_FILE = 'csv'
+
+# Registry
+VALUE_CHANGE = 'Registry value change.'
+VALUE_ADD = 'Registry value add.'
+VALUE_DEL = 'Registry value deleted.'
+KEY_ADD = 'Registry key add.'
+KEY_DEL = 'Registry key deleted.'

@@ -263,6 +263,94 @@ def insert_alert_integrity(current_time, state, path):
                         "VALUES(?, ?, ?, ?)", (None, current_time, state, path))
             conn.commit()
             return SUCCESS_CODE
+    except sqlite3.Error as e:
+        print(e)
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Insert hash record to database
+def insert_hash_to_db(type_object, path_object, hash_str):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            if type_object == FILE_TYPE:
+                cur.execute("INSERT INTO " + "hash_file " +
+                            "VALUES(?, ?, ?)", (None, path_object, hash_str))
+                conn.commit()
+            elif type_object == REGISTRY_TYPE:
+                cur.execute("INSERT INTO " + "hash_registry " +
+                            "VALUES(?, ?, ?)", (None, path_object, hash_str))
+            return SUCCESS_CODE
     except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Get information of sys_check_object
+def get_info_sys_check_object(type_object, path_object):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM sys_check_object " +
+                        "WHERE type = ? AND path = ?", (type_object, path_object))
+            return cur.fetchone()
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Change state of sys_check_object
+def update_state_sys_check_object_by_id(id_object):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("UPDATE sys_check_object " +
+                        "SET state = ? "
+                        "WHERE id_object = ?", (SYS_CHECK_OBJECT_OLD, id_object))
+            conn.commit()
+            print("Change state of sys_check_object.")
+            return SUCCESS_CODE
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+def update_hash_record_by_id(type_object, id_object, hash_str):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            if type_object == FILE_TYPE:
+                cur.execute("UPDATE hash_file " +
+                            "SET hash_str = ? " +
+                            "WHERE id_file = ?", (hash_str, id_object))
+            elif type_object == REGISTRY_TYPE:
+                cur.execute("UPDATE hash_registry " +
+                            "SET hash_str = ? " +
+                            "WHERE id_registry = ?", (hash_str, id_object))
+            conn.commit()
+            return SUCCESS_CODE
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Get list file in current diriectory
+def get_list_file_from_current_dir_and_child(path_dir):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM hash_file "
+                        "WHERE path_file LIKE ? ", (path_dir + "\\%", ))
+            return cur.fetchall()
+    except sqlite3.Error as e:
+        print(e)
         print(QUERY_TABLE_DB_ERROR_MSG)
         return ERROR_CODE
