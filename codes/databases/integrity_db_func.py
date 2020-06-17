@@ -354,3 +354,37 @@ def get_list_file_from_current_dir_and_child(path_dir):
         print(e)
         print(QUERY_TABLE_DB_ERROR_MSG)
         return ERROR_CODE
+
+
+# Get list alert in 7 day ago
+def get_list_alert_7day_ago(start_time):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM alert_integrity " +
+                        "WHERE time > ? "
+                        "ORDER BY time DESC " +
+                        "LIMIT 1000", (start_time, ))
+            return cur.fetchall()
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Get list alert in start_time and end_time
+def get_list_alert_at_time(start_time, end_time):
+    try:
+        conn = get_connect_db(INTEGRITY_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM alert_integrity " +
+                        "WHERE time > ? AND time < ? "
+                        "ORDER BY time DESC " +
+                        "LIMIT 1000", (start_time, end_time))
+            return cur.fetchall()
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE

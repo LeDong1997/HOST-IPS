@@ -79,6 +79,6 @@ def write_log_crypto(time_stamp, state, action, path_file):
     ENCRYPT_LOG_PATH = LOG_PATH + "\\crypto.txt"
     try:
         with open(ENCRYPT_LOG_PATH, 'a') as f_out:
-            f_out.write("[%s][%s][%s][%s]\n" % (time_stamp, state, action, path_file))
+            f_out.write("%s|%s|%s|%s\n" % (time_stamp, state, action, path_file))
     except (Exception, ValueError):
         return ERROR_CODE

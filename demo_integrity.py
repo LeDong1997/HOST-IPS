@@ -16,3 +16,18 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+    # python demo_integrity.py -i "test.txt" file[0] / directory [1]
+    # python demo_integrity.py -r "test.txt" file[0] / directory [1]
+    # python demo_integrity.py -s "test.txt" file[0] / directory [1] / registry[3]
+    # python demo_integrity.py -x sample.xml
+    # python demo_integrity.py -m "test.txt"
+    # python demo_integrity.py -a id
+    # python demo_integrity.py -l
+    # python demo_integrity.py -a
+    # python demo_integrity.py -e
+    # python demo_integrity.py -h
+    # python demo_integrity.py -g
+    # python demo_integrity.py -s_a
+    # python demo_integrity.py -l_7
+    # python demo_integrity.py -l "2020-06-08 10:24:19" "2020-06-17 10:24:19"

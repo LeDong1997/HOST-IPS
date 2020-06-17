@@ -240,6 +240,14 @@ def main_integrity():
                     print(json.dumps({'result': success, 'error_msg': msg}))
                 else:
                     print(json.dumps({'result': success, 'msg': msg}))
+            elif argv[1] == '-l':
+                # Get integrity alert in start_time and end_time in database
+                # Example: python demo_integrity.py -l "2020-06-08 10:24:19" "2020-06-10 10:24:19"
+                alert_list = get_list_alert_at_time(argv[2], argv[3])
+                if alert_list == ERROR_CODE:
+                    print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
+                else:
+                    print(json.dumps({'result': True, 'alert_list': alert_list}))
             return SUCCESS_CODE
         else:
             if argc == 3:
@@ -327,6 +335,18 @@ def main_integrity():
                         print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "The error while check integrity."}))
                     else:
                         print(json.dumps({'result': result == SUCCESS_CODE, 'msg': 'Done check integrity for system.'}))
+                    return SUCCESS_CODE
+                elif argv[1] == '-l_7':
+                    # Get integrity alert in 7 day ago in database
+                    # Example: demo_integrity.py -l_7
+                    current_time = datetime.now()
+                    date_7_day_ago = current_time - timedelta(days=7)
+                    date_7_day_ago = date_7_day_ago.strftime('%Y-%m-%d %H:%M:%S')
+                    alert_list = get_list_alert_7day_ago(date_7_day_ago)
+                    if alert_list == ERROR_CODE:
+                        print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
+                    else:
+                        print(json.dumps({'result': True, 'alert_list': alert_list}))
                     return SUCCESS_CODE
                 else:
                     return usage_integrity_func()

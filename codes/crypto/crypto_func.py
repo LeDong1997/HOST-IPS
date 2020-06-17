@@ -1,7 +1,8 @@
 import sys
 import struct
+import json
 from Crypto import Random
-from datetime import datetime
+from datetime import datetime, timedelta
 from Crypto.Cipher import AES
 from codes.systems.hash_func import *
 
@@ -234,6 +235,52 @@ def decrypt_dir(path_dir, password, choice):
     return SUCCESS_CODE
 
 
+# Get event in start_time and end_time
+def get_events_encrypt(start_time, end_time):
+    ENCRYPT_LOG_PATH = LOG_PATH + "\\crypto.txt"
+    totals = 0
+    events = []
+    try:
+        with open(ENCRYPT_LOG_PATH) as f_read:
+            while True:
+                line = f_read.readline()
+                line_parse = line.split('|')
+                if not line:
+                    break
+                if (line_parse[0] > start_time) and (line_parse[0] < end_time):
+                    events.append(line_parse)
+                    totals = totals + 1
+        msg = "Total events: " + str(totals) + "."
+        print(msg)
+        return SUCCESS_CODE, events
+    except Exception as e:
+        print(e)
+        return ERROR_CODE, "Cannot open log file."
+
+
+# Get event_log in 7 day ago
+def get_events_encrypt_7ago(start_time):
+    ENCRYPT_LOG_PATH = LOG_PATH + "\\crypto.txt"
+    totals = 0
+    events = []
+    try:
+        with open(ENCRYPT_LOG_PATH) as f_read:
+            while True:
+                line = f_read.readline()
+                line_parse = line.split('|')
+                if not line:
+                    break
+                if line_parse[0] > start_time:
+                    events.append(line_parse)
+                    totals = totals + 1
+        msg = "Total events: " + str(totals) + "."
+        print(msg)
+        return SUCCESS_CODE, events
+    except Exception as e:
+        print(e)
+        return ERROR_CODE, "Cannot open log file."
+
+
 def usage_crypto_func():
     print("\nAdd argument to crypto function.")
     print("$ python demo_crypto.py -operation -object -path -password [options]")
@@ -279,6 +326,25 @@ def main_crypto():
                     return usage_crypto_func()
             else:
                 return usage_crypto_func()
+        elif argc == 4 and argv[1] == '-l':
+            # python demo_crypto.py -l "2020-06-08 10:24:19" "2020-06-10 10:24:19"
+            result, events = get_events_encrypt(argv[2], argv[3])
+            if result == ERROR_CODE:
+                print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "The error get events logs."}))
+            else:
+                print(json.dumps({'result': result == SUCCESS_CODE, 'events': events}))
+        elif argc == 2 and argv[1] == '-l_7':
+            # python demo_crypto.py -l_7
+            current_time = datetime.now()
+            date_7_day_ago = current_time - timedelta(days=7)
+            date_7_day_ago = date_7_day_ago.strftime('%Y-%m-%d %H:%M:%S')
+            print(date_7_day_ago)
+            result, events = get_events_encrypt_7ago(date_7_day_ago)
+            if result == ERROR_CODE:
+                print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "The error get events logs."}))
+            else:
+                print(json.dumps({'result': result == SUCCESS_CODE, 'events': events}))
+            return SUCCESS_CODE
         else:
             return usage_crypto_func()
     except (Exception, ValueError):
