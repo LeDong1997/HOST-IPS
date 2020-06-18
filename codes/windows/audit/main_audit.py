@@ -92,6 +92,14 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'alert_list': alert_list}))
+                # Get list monitor object from database
+                # Example: demo_integrity.py -l
+            elif argv[1] == '-l':
+                check_list = get_list_monitor_object()
+                if check_list == ERROR_CODE:
+                    print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
+                else:
+                    print(json.dumps({'result': True, 'check_list': check_list}))
                 return SUCCESS_CODE
             # else:
                 # return usage_audit_func()
