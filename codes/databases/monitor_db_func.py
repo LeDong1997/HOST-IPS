@@ -24,8 +24,11 @@ def create_monitor_db():
             sql_query = "CREATE TABLE IF NOT EXISTS alert_monitor(" \
                         + "id_alert INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " \
                         + "time TEXT, " \
-                        + "state TEXT, " \
-                        + "path TEXT(260))"
+                        + "user TEXT, " \
+                        + "domain TEXT, " \
+                        + "action TEXT, " \
+                        + "resource TEXT(260), " \
+                        + "note TEXT)"
             cur.execute(sql_query)
 
             conn.commit()
@@ -90,6 +93,97 @@ def remove_monitor_object(path_object, type_object):
                 print("The monitor_object don't exist in database.")
             conn.commit()
             return SUCCESS_CODE
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Get list alert in 7 day ago
+def get_list_alert_7day_ago(start_time):
+    print(start_time)
+    try:
+        conn = get_connect_db(MONITOR_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM alert_monitor " +
+                        "WHERE time > ? "
+                        "ORDER BY time DESC " +
+                        "LIMIT 1000", (start_time, ))
+            return cur.fetchall()
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Get list alert in start_time and end_time
+def get_list_alert_at_time(start_time, end_time):
+    try:
+        conn = get_connect_db(MONITOR_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM alert_monitor " +
+                        "WHERE time > ? AND time < ? "
+                        "ORDER BY time DESC " +
+                        "LIMIT 1000", (start_time, end_time))
+            return cur.fetchall()
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Insert alert to monitor table
+def insert_alert_monitor(alert_dict):
+    try:
+        conn = get_connect_db(MONITOR_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM alert_monitor " +
+                        "WHERE time = ? AND resource = ?", (alert_dict['time'], alert_dict['resource'],))
+            result = cur.fetchone()
+
+            if result is None:
+                cur.execute("INSERT INTO " +
+                            "alert_monitor " +
+                            "VALUES(?, ?, ?, ?, ?, ?, ?)",
+                            (None, alert_dict['time'], alert_dict['user'], alert_dict['domain'], alert_dict['action'],
+                             alert_dict['resource'], alert_dict['note']))
+            conn.commit()
+            return SUCCESS_CODE
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Remove all alert to monitor
+def remove_all_alert_monitor():
+    try:
+        conn = get_connect_db(MONITOR_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("DROP TABLE " +
+                        "IF EXISTS " +
+                        "alert_monitor")
+            conn.commit()
+            return SUCCESS_CODE
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
+# Get 1000 list alert in database
+def get_list_alert_limit_1000():
+    try:
+        conn = get_connect_db(MONITOR_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * " +
+                        "FROM alert_monitor " +
+                        "ORDER BY time DESC " +
+                        "LIMIT 1000")
+            return cur.fetchall()
     except sqlite3.Error:
         print(QUERY_TABLE_DB_ERROR_MSG)
         return ERROR_CODE

@@ -2,7 +2,7 @@ import sys
 import struct
 import json
 from Crypto import Random
-from datetime import datetime, timedelta
+from datetime import timedelta
 from Crypto.Cipher import AES
 from codes.systems.hash_func import *
 

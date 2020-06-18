@@ -184,7 +184,7 @@ def scan_integrity_object(path_object, type_object):
 
     if type_object == FILE_TYPE or str(type_object) == str(FILE_TYPE):
         return scan_file(path_object, current_time)
-    elif type_object == DIR_TYPE or str(type_object) == DIR_TYPE:
+    elif type_object == DIR_TYPE or str(type_object) == str(DIR_TYPE):
         return scan_dir(path_object, current_time)
     elif type_object == REGISTRY_TYPE or str(type_object) == str(REGISTRY_TYPE):
         return scan_registry_key(path_object, current_time)

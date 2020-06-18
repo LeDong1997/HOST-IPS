@@ -1,5 +1,6 @@
 import sys
 import json
+from datetime import timedelta
 from .audit_windows_func import *
 from codes.audit.audit_func import *
 from codes.databases.monitor_db_func import *
@@ -46,121 +47,60 @@ def main():
                     print(json.dumps({'result': result == SUCCESS_CODE, 'monitor_list': check_list}))
                 else:
                     print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "Error remove sys_check_object"}))
-
-
-        #     # Remove sys_check_object from database
-        #     # Example: demo_integrity.py -r "test.txt" file[0] / directory [1]
-        #     elif argv[1] == '-r':
-        #         result = remove_sys_check_object(argv[2], argv[3])
-        #         if result == SUCCESS_CODE:
-        #             check_list = get_list_sys_check_object()
-        #             print(json.dumps({'result': result == SUCCESS_CODE, 'check_list': check_list}))
-        #         else:
-        #             print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "Error remove sys_check_object"}))
-        #     # Scan integrity for eacch sys_check_object for system
-        #     # Example: demo_integrity.py -s "test.txt" file[0] / directory [1] / registry[3]
-        #     elif argv[1] == '-s':
-        #         result, msg = scan_integrity_object(argv[2], argv[3])
-        #         # alertList = get_alert_list()
-        #         success = result == 0
-        #         if result != 0:
-        #             print(json.dumps({'result': success, 'error_msg': msg}))
-        #         else:
-        #             print(json.dumps({'result': success, 'msg': msg}))
-        #     return SUCCESS_CODE
-        # else:
-        #     if argc == 3:
-        #         # Add sys_check_object from XML file
-        #         # Example: demo_integrity.py -x sample.xml
-        #         if argv[1] == '-x':
-        #             result, msg = validate_path_sys_check_object(argv[2])
-        #             if result == SUCCESS_CODE:
-        #                 if msg == SYS_CHECK_OBJECT_XML_FILE:
-        #                     result = add_sys_check_object_from_xml(argv[2])
-        #                 elif msg == SYS_CHECK_OBJECT_CSV_FILE:
-        #                     result = add_sys_check_object_from_csv(argv[2])
-        #                 check_list = get_list_sys_check_object()
-        #                 print(json.dumps({'result': result == SUCCESS_CODE, 'check_list': check_list}))
-        #             else:
-        #                 print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': msg}))
-        #         # Calculate the hash message (SHA-256) for file
-        #         # Example: demo_integrity.py -m "test.txt"
-        #         if argv[1] == '-m':
-        #             result = check_file_exist(FILE_TYPE, argv[2])
-        #             if result == FILE_NOT_FOUND_CODE:
-        #                 print(json.dumps({'result': False, 'error_msg': "Path file invalid."}))
-        #             else:
-        #                 result, msg = hash_sha256(argv[2])
-        #                 if result == SUCCESS_CODE:
-        #                     print(json.dumps({'result': True, 'hash_str': msg}))
-        #                 else:
-        #                     print(json.dumps({'result': False, 'error_msg': msg}))
-        #         # Get list alert have id gather than id_alert old
-        #         # Example: demo_integrity.py -a id
-        #         if argv[1] == '-a':
-        #             result = get_list_last_alert_from_id(argv[2])
-        #             print(json.dumps({'list_alert': result}))
-        #         return SUCCESS_CODE
-        #     if argc == 2:
-        #         # Get list sys_check_object from database
-        #         # Example: demo_integrity.py -l
-        #         if argv[1] == '-l':
-        #             check_list = get_list_sys_check_object()
-        #             if check_list == ERROR_CODE:
-        #                 print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
-        #             else:
-        #                 print(json.dumps({'result': True, 'check_list': check_list}))
-        #             return SUCCESS_CODE
-        #         # Get list last 1000 alert integrity from database
-        #         # Example: demo_integrity.py -a
-        #         elif argv[1] == '-a':
-        #             alert_list = get_list_alert_limit_1000()
-        #             if alert_list == ERROR_CODE:
-        #                 print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
-        #             else:
-        #                 print(json.dumps({'result': True, 'alert_list': alert_list}))
-        #             return SUCCESS_CODE
-        #         # Get last alert_id from database
-        #         # Example: demo_integrity.py -e
-        #         elif argv[1] == '-e':
-        #             id_alert = get_last_alert_id_integrity()
-        #             if id_alert == ERROR_CODE:
-        #                 print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
-        #             else:
-        #                 print(json.dumps({'result': True, 'last_alert_id': id_alert}))
-        #             return SUCCESS_CODE
-        #         # Get list hash_file from database
-        #         # Example: demo_integrity.py -h
-        #         elif argv[1] == '-h':
-        #             hash_file_list = get_list_hash_file_limit_1000()
-        #             if hash_file_list == ERROR_CODE:
-        #                 print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
-        #             else:
-        #                 print(json.dumps({'result': True, 'hash_file_list': hash_file_list}))
-        #             return SUCCESS_CODE
-        #         # Get list hash registry from database
-        #         # Example: demo_integrity.py -g
-        #         elif argv[1] == '-g':
-        #             hash_registry_list = get_list_hash_registry_limit_1000()
-        #             if hash_registry_list == ERROR_CODE:
-        #                 print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
-        #             else:
-        #                 print(json.dumps({'result': True, 'hash_registry_list': hash_registry_list}))
-        #         # Scan all sys_check_object in database
-        #         # Example: demo_integrity.py -s_a
-        #         elif argv[1] == '-s_a':
-        #             result = scan_all_integrity_object()
-        #             if result == ERROR_CODE:
-        #                 print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "The error while check integrity."}))
-        #             else:
-        #                 print(json.dumps({'result': result == SUCCESS_CODE, 'msg': 'Done check integrity for system.'}))
-        #             return SUCCESS_CODE
-        #         else:
-        #             return usage_integrity_func()
-        # return usage_integrity_func()
-    except Exception as e:
-        print(e)
+            # Get list alert monitor in start_time and end_time
+            # Example: demo_monitor.py -a "2020-06-08 10:24:19" "2020-06-17 10:24:19"
+            elif argv[1] == '-a':
+                alert_list = get_list_alert_at_time(argv[2], argv[3])
+                if alert_list == ERROR_CODE:
+                    print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
+                else:
+                    print(json.dumps({'result': True, 'alert_list': alert_list}))
+        elif argc == 3:
+            if argv[1] == '-s':
+                # Scan windows event log with path_event_file
+                # Example: demo_monitor.py -s path_event
+                result, msg = scan_one_audit_log(argv[2], backup_flag=True)
+                if result == SUCCESS_CODE:
+                    print(json.dumps({'result': result == SUCCESS_CODE, 'msg': msg}))
+                else:
+                    print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': msg}))
+        elif argc == 2:
+            # Scan all windows event log
+            # Example: demo_monitor.py -s_a
+            if argv[1] == '-s_a':
+                result, msg = scan_all_audit_log()
+                if result == SUCCESS_CODE:
+                    print(json.dumps({'result': result == SUCCESS_CODE, 'msg': msg}))
+                else:
+                    print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': msg}))
+            # Get all list alert_monitor
+            # Example: demo_monitor.py -a
+            elif argv[1] == '-a':
+                alert_list = get_list_alert_limit_1000()
+                if alert_list == ERROR_CODE:
+                    print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
+                else:
+                    print(json.dumps({'result': True, 'alert_list': alert_list}))
+            # Get list alert monitor by 7 day ago
+            # Example: demo_monitor.py -a_7
+            elif argv[1] == '-a_7':
+                current_time = datetime.now()
+                date_7_day_ago = current_time - timedelta(days=7)
+                date_7_day_ago = date_7_day_ago.strftime('%Y-%m-%d %H:%M:%S')
+                alert_list = get_list_alert_7day_ago(date_7_day_ago)
+                if alert_list == ERROR_CODE:
+                    print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
+                else:
+                    print(json.dumps({'result': True, 'alert_list': alert_list}))
+                return SUCCESS_CODE
+            # else:
+                # return usage_audit_func()
+            return SUCCESS_CODE
+        # return usage_audit_func()
+    except (Exception, ValueError):
+        # print(e)
         return ERROR_CODE
 
 
+# Execute main-audit function
 main()

@@ -40,6 +40,11 @@ Run project in virtual environment
 
 `> pip install -r requirements_windows.txt`
 
+## Note
+Setup Windows Audit Log
+* https://gallery.technet.microsoft.com/scriptcenter/How-to-audit-changed-39afba72#content
+* Run program with Administrator permission
+
 #
 # Linux
 

@@ -1,5 +1,7 @@
+from datetime import datetime
 import os
 import time
+import zipfile
 from codes.program_msg import *
 
 
@@ -82,3 +84,34 @@ def write_log_crypto(time_stamp, state, action, path_file):
             f_out.write("%s|%s|%s|%s\n" % (time_stamp, state, action, path_file))
     except (Exception, ValueError):
         return ERROR_CODE
+
+
+# Compress file with zip
+def compress_file(path_dir, list_path_file):
+    try:
+        if len(list_path_file) == 0:
+            return SUCCESS_CODE, "The empty compress file."
+
+        current_time = datetime.now()
+        current_time = current_time.strftime('%Y-%m-%d %H-%M-%S')
+        path_zip = path_dir + "\\" + current_time + '.zip'
+        zip_handle = zipfile.ZipFile(path_zip, 'w', zipfile.ZIP_DEFLATED)
+        print("Start zip file: " + path_zip)
+
+        success = 0
+        error = 0
+        for path_file in list_path_file:
+            try:
+                print('Handle file: ' + path_file)
+                zip_handle.write(path_file)
+                success = success + 1
+            except (Exception, ValueError):
+                error = error + 1
+                continue
+        zip_handle.close()
+        msg = "Done zip file.\n" + "Success: " + str(success) + "\nError: " + str(error)
+        print(msg)
+        return SUCCESS_CODE, msg
+    except Exception as e:
+        print(e)
+        return ERROR_CODE, "Error while compress many file."

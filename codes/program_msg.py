@@ -84,3 +84,14 @@ VALUE_ADD = 'Registry value add.'
 VALUE_DEL = 'Registry value deleted.'
 KEY_ADD = 'Registry key add.'
 KEY_DEL = 'Registry key deleted.'
+
+PATH_DIR_EVENT_LOG = r"C:\Event_Logs"
+
+
+ADD_FILE_ACTION_MSG = 'Create'
+CHANGE_FILE_ACTION_MSG = 'Modify'
+DELETE_FILE_ACTION_MSG = 'Delete'
+RENAME_FILE_ACTION_MSG = 'Rename'
+MOVE_FILE_ACTION_MSG = 'Move'
+RESTORE_FILE_ACTION_MSG = 'Restore'
+RECYCLE_FILE_ACTION_MSG = 'Recycle'
