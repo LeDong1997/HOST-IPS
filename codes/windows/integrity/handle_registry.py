@@ -30,7 +30,7 @@ res = {}
 # else return hex string hash 1 result
 def hash1Str(str_value):
     try:
-        hash_alo = hashlib.sha1()
+        hash_alo = hashlib.sha256()
         hash_alo.update(str_value.encode())
     except Exception as e:
         print(e, 123)

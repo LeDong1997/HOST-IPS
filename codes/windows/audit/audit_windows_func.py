@@ -35,6 +35,7 @@ def add_audit_rules(path_object, type_object):
 
         (output, err) = p.communicate()
         p.wait()
+        print(str(output))
 
         result = str(output).find("-1")
         if result != -1:
@@ -115,6 +116,7 @@ def scan_one_audit_log(path_event_log, backup_flag=True):
     try:
         if backup_flag:
             handle = win32evtlog.OpenBackupEventLog(None, path_event_log)
+            print("backup")
         else:
             handle = win32evtlog.OpenEventLog(None, "Security")
 
@@ -193,7 +195,10 @@ def scan_one_audit_log(path_event_log, backup_flag=True):
                                         alert_dict['note'] = '0x2'
                                         print(
                                             "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                            % (event_time, event_user, event_computer, MOVE_FILE_ACTION_MSG, event_object, "0x2"))
+                                            % (
+                                                event_time, event_user, event_computer, MOVE_FILE_ACTION_MSG,
+                                                event_object,
+                                                "0x2"))
                                         insert_alert_monitor(alert_dict)
                                         del pending_delete[key]
                                     # Files moved into the recycle bin
@@ -202,7 +207,8 @@ def scan_one_audit_log(path_event_log, backup_flag=True):
                                         alert_dict['note'] = '0x2'
                                         print(
                                             "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                            % (event_time, event_user, event_computer, RECYCLE_FILE_ACTION_MSG, event_object, "0x2"))
+                                            % (event_time, event_user, event_computer, RECYCLE_FILE_ACTION_MSG,
+                                               event_object, "0x2"))
                                         insert_alert_monitor(alert_dict)
                                         del pending_delete[key]
                                     # Files moved out of the recycle bin
@@ -211,7 +217,8 @@ def scan_one_audit_log(path_event_log, backup_flag=True):
                                         alert_dict['note'] = '0x2'
                                         print(
                                             "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                            % (event_time, event_user, event_computer, RESTORE_FILE_ACTION_MSG, event_object, "0x2"))
+                                            % (event_time, event_user, event_computer, RESTORE_FILE_ACTION_MSG,
+                                               event_object, "0x2"))
                                         insert_alert_monitor(alert_dict)
                                         del pending_delete[key]
                                     # Created / renamed files
@@ -221,13 +228,15 @@ def scan_one_audit_log(path_event_log, backup_flag=True):
                                             alert_dict['note'] = ''
                                             print(
                                                 "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                                % (event_time, event_user, event_computer, ADD_FILE_ACTION_MSG, event_object, ""))
+                                                % (event_time, event_user, event_computer, ADD_FILE_ACTION_MSG,
+                                                   event_object, ""))
                                         else:
                                             alert_dict['action'] = RENAME_FILE_ACTION_MSG
                                             alert_dict['note'] = ''
                                             print(
                                                 "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                                % (event_time, event_user, event_computer, RENAME_FILE_ACTION_MSG, key, ""))
+                                                % (event_time, event_user, event_computer, RENAME_FILE_ACTION_MSG, key,
+                                                   ""))
                                             insert_alert_monitor(alert_dict)
                                         del pending_delete[key]
                                     break
@@ -252,16 +261,106 @@ def scan_one_audit_log(path_event_log, backup_flag=True):
                         # msg = win32evtlogutil.SafeFormatMessage(event, log_type)
             total = total + len(events)
         win32evtlog.CloseEventLog(handle)
+        print(total, num_records)
         msg = "Done read event_log. Scan: " + str(total) + "/" + str(num_records) + "."
+        print(msg)
         return SUCCESS_CODE, msg
     except Exception as e:
         print(e, 123)
         return ERROR_CODE, "Cannot read windows event_log."
 
 
+def scan_one_audit_log1(path_event_log, backup_flag=False):
+    # path_log = r"C:\Users\Cu Lee\Desktop\Archive-Security-2020-06-25-07-43-43-737\log.txt"
+    flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
+    list_id = [4656, 4663, 4660, 4658, 4659]
+    try:
+        if backup_flag:
+            handle = win32evtlog.OpenBackupEventLog(None, path_event_log)
+        else:
+            handle = win32evtlog.OpenEventLog(None, "Security")
+
+        num_records = win32evtlog.GetNumberOfEventLogRecords(handle)
+        total = 0
+
+        # with open(path_log, 'a') as f_out:
+
+        pending_delete = {}
+        alert_dict = {}
+        events = 1  # Object
+        while events:
+            events = win32evtlog.ReadEventLog(handle, flags, 0)
+            for event in events:
+                event_category = event.EventCategory
+                # ID of event
+                event_id = winerror.HRESULT_CODE(event.EventID)
+                if filter_id(event_id, list_id) and (event_category == 12800 or event_category == 12812):
+                    # Time generated event
+                    event_time = event.TimeGenerated.strftime('%Y-%m-%d %H:%M:%S')
+                    event_computer = str(event.ComputerName)
+                    event_user = event.StringInserts[1]
+
+                    if event_id == 4658:
+                        event_handle_id = event.StringInserts[5]
+                        event_process_id = event.StringInserts[6]
+                        # f_out.write(
+                        #     "%s|%s|%s|%s|%s|%s\n" % (str(event_id) + ": ", event_time, event_computer, event_user,
+                        #                              event_handle_id, event_process_id))
+
+                        if not has_key(event_handle_id, pending_delete):
+                            pending_delete[event_handle_id] = {}
+
+                    if event_id == 4663:
+                        event_object = event.StringInserts[6]
+                        event_handle_id = event.StringInserts[7]
+                        event_access_mask = event.StringInserts[9]
+                        event_process_id = event.StringInserts[10]
+                        # f_out.write("%s|%s|%s|%s|%s|%s|%s|%s\n" % ("4663: ", event_time, event_computer, event_user,
+                        #                                            event_object, event_handle_id, event_access_mask,
+                        #                                            event_process_id))
+
+                        if has_key(event_handle_id, pending_delete):
+                            if event_access_mask == '0x2':
+                                print(event_time, event_user, " Create: " + event_object)
+                            if event_access_mask == '0x6':
+                                print(event_time, event_user, " Modify: " + event_object)
+
+                    if event_id == 4656:
+                        event_object = event.StringInserts[6]
+                        event_handle_id = event.StringInserts[7]
+                        # event_access_mask = event.StringInserts[11]
+                        # event_process_id = event.StringInserts[14]
+
+                        flag_key = False
+                        for key in pending_delete.keys():
+                            if event_handle_id == key:
+                                flag_key = True
+                                break
+
+                        if flag_key is True:
+                            del pending_delete[event_handle_id]
+
+                        # if not has_key(event_object, pending_delete):
+                        #     pending_delete[event_object] = {}
+                        #     pending_delete[event_object]['handle_id'] = event_handle_id
+                        #     # f_out.write(
+                        #     #     "%s|%s|%s|%s|%s|%s|%s|%s\n" % ("4656: ", event_time, event_computer, event_user,
+                        #     #                                    event_object, event_handle_id, event_access_mask,
+                        #     #                                    event_process_id))
+                        # print(pending_delete)
+            total = total + len(events)
+        win32evtlog.CloseEventLog(handle)
+        msg = "Done read event_log. Scan: " + str(total) + "/" + str(num_records) + "."
+        print(msg)
+    except Exception as e:
+        print(e)
+
+
 # Scan all audit in windows event log
 def scan_all_audit_log():
-    path_event_dir = PATH_DIR_EVENT_LOG
+    # path_event_dir = PATH_DIR_EVENT_LOG
+    path_event_dir = r"C:\Users\Cu Lee\Desktop"
+
     result = check_file_exist(DIR_TYPE, path_event_dir)
     if result == DIR_NOT_FOUND_CODE:
         os.mkdir(path_event_dir)
@@ -279,14 +378,16 @@ def scan_all_audit_log():
                 else:
                     p_list_file.append(path_file)
                     scan_one_audit_log(path_file, backup_flag=True)
+            # break
         break
-    result, msg = compress_file(path_event_dir, p_list_file)
-    for path_file in p_list_file:
-        try:
-            os.remove(path_file)
-        except Exception as e:
-            print(e)
-            continue
+    msg = ""
+    # result, msg = compress_file(path_event_dir, p_list_file)
+    # for path_file in p_list_file:
+    #     try:
+    #         os.remove(path_file)
+    #     except Exception as e:
+    #         print(e)
+    #         continue
     return result, msg
 
 
