@@ -28,6 +28,6 @@ if __name__ == '__main__':
     # python demo_integrity.py -e
     # python demo_integrity.py -h
     # python demo_integrity.py -g
-    # python demo_integrity.py -s_a
+    # python demo_integrity.py -s_a         # Scan all
     # python demo_integrity.py -l_7
     # python demo_integrity.py -l "2020-06-08 10:24:19" "2020-06-17 10:24:19"

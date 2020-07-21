@@ -338,7 +338,6 @@ def main_crypto():
             current_time = datetime.now()
             date_7_day_ago = current_time - timedelta(days=7)
             date_7_day_ago = date_7_day_ago.strftime('%Y-%m-%d %H:%M:%S')
-            print(date_7_day_ago)
             result, events = get_events_encrypt_7ago(date_7_day_ago)
             if result == ERROR_CODE:
                 print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "The error get events logs."}))

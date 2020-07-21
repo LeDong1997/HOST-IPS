@@ -6,15 +6,14 @@ Param(
     [String] $path_object
 )
 try{
-    Write-Host Get-Location
+#    Write-Host $type_object
+#    Write-Host $path_object
+#    Write-Host "123"
+
     $acl = Get-Acl $path_object -Audit -ErrorAction Stop
     $audit_user = "Everyone"
     $audit_types = "Success, Failure"
     $audit_rules = "DeleteSubdirectoriesAndFiles, Modify, ChangePermissions, TakeOwnership"
-
-    Write-Host $type_object
-    Write-Host $path_object
-    Write-Host "123"
 
     if($type_object -eq 0){
         $access_rules = New-Object System.Security.AccessControl.FileSystemAuditRule($audit_user, $audit_rules, "None", "None", $audit_types)

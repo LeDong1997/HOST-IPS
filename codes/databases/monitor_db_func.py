@@ -134,22 +134,15 @@ def get_list_alert_at_time(start_time, end_time):
 
 
 # Insert alert to monitor table
-def insert_alert_monitor(alert_dict):
+def insert_alert_monitor(evt_time, domain, user, action, resource, note):
     try:
         conn = get_connect_db(MONITOR_DB_PATH)
         with conn:
             cur = conn.cursor()
-            cur.execute("SELECT * " +
-                        "FROM alert_monitor " +
-                        "WHERE time = ? AND resource = ?", (alert_dict['time'], alert_dict['resource'],))
-            result = cur.fetchone()
-
-            if result is None:
-                cur.execute("INSERT INTO " +
-                            "alert_monitor " +
-                            "VALUES(?, ?, ?, ?, ?, ?, ?)",
-                            (None, alert_dict['time'], alert_dict['user'], alert_dict['domain'], alert_dict['action'],
-                             alert_dict['resource'], alert_dict['note']))
+            cur.execute("INSERT INTO " +
+                        "alert_monitor " +
+                        "VALUES(?, ?, ?, ?, ?, ?, ?)",
+                        (None, evt_time, domain, user, action, resource, note))
             conn.commit()
             return SUCCESS_CODE
     except sqlite3.Error:

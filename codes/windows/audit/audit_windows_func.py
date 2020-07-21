@@ -29,8 +29,10 @@ event_object_access = {12800: 'File System',
 # Add new audit rule for file / directory
 def add_audit_rules(path_object, type_object):
     try:
-        cmd = r'.\codes\windows\audit\powershell\add_rules_audit.ps1'
+        # cmd = r'codes\windows\audit\powershell\.add_rules_audit.ps1'
+        cmd = r'.\codes\powershell\add_rules_audit.ps1'
         arg_path = path_object.replace(' ', "' '")
+        # print(cmd, type_object, arg_path)
         p = subprocess.Popen(["powershell.exe", cmd, type_object, arg_path], stdout=subprocess.PIPE, shell=True)
 
         (output, err) = p.communicate()
@@ -38,6 +40,10 @@ def add_audit_rules(path_object, type_object):
         print(str(output))
 
         result = str(output).find("-1")
+        if result != -1:
+            print("Error in add audit permission for object.")
+            return ERROR_CODE
+        result = str(output).find("Exception")
         if result != -1:
             print("Error in add audit permission for object.")
             return ERROR_CODE
@@ -67,29 +73,6 @@ def remove_audit_rules(path_object):
         return ERROR_CODE
 
 
-# Check key has contain in dictionary
-def has_key(key, dict_data):
-    return key in dict_data
-
-
-# Check str1 contain in str2
-def is_contain_str(str1, str2):
-    if str2.find(str1) == -1:
-        return False
-    return True
-
-
-# Get file_name from path_file
-def get_file_name(path_file):
-    path, file_name = os.path.split(path_file)
-    return file_name
-
-
-# Get folder_name from path_dir
-def get_folder_name(path_dir):
-    return os.path.basename(path_dir)
-
-
 # List filter event id
 def filter_id(event_id, list_id):
     for _id in list_id:
@@ -98,204 +81,65 @@ def filter_id(event_id, list_id):
     return False
 
 
-def is_insert_alert(alert_dict1, alert_dict2):
-    b_time = (alert_dict1['time'] == alert_dict2['time'])
-    b_user = (alert_dict1['user'] == alert_dict2['user'])
-    b_domain = (alert_dict1['domain'] == alert_dict2['domain'])
-    b_access_mask = (alert_dict1['note'] == alert_dict2['note'])
+def is_has_key(key, dict_data):
+    return key in dict_data
 
-    if b_time and b_user and b_domain and b_access_mask:
+
+def check_is_file(path_file):
+    temp, ext = os.path.splitext(path_file)
+    if len(ext):
+        return True
+    else:
         return False
-    return True
 
 
-# Get alert by one audit_log
+def insert_alert(alert_temp, evt_time, domain, user, action, resource, note):
+    if alert_temp['time'] != evt_time:
+        insert_alert_monitor(evt_time, domain, user, action, resource, note)
+        return
+
+    if alert_temp['domain'] != domain:
+        insert_alert_monitor(evt_time, domain, user, action, resource, note)
+        return
+
+    if alert_temp['user'] != user:
+        insert_alert_monitor(evt_time, domain, user, action, resource, note)
+        return
+
+    if alert_temp['action'] != action:
+        insert_alert_monitor(evt_time, domain, user, action, resource, note)
+        return
+    if alert_temp['resource'] != resource:
+        insert_alert_monitor(evt_time, domain, user, action, resource, note)
+        return
+
+
+def init_alert_temp(evt_time, domain, user, action, resource):
+    alert_temp = {'time': evt_time, 'domain': domain, 'user': user, 'action': action, 'resource': resource}
+    return alert_temp
+
+
 def scan_one_audit_log(path_event_log, backup_flag=True):
     flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
-    list_id = [4656, 4663, 4660, 4659]
-    try:
-        if backup_flag:
-            handle = win32evtlog.OpenBackupEventLog(None, path_event_log)
-            print("backup")
-        else:
-            handle = win32evtlog.OpenEventLog(None, "Security")
-
-        num_records = win32evtlog.GetNumberOfEventLogRecords(handle)
-        total = 0
-
-        pending_delete = {}
-        alert_dict = {}
-        events = 1  # Object
-        while events:
-            events = win32evtlog.ReadEventLog(handle, flags, 0)
-            for event in events:
-                event_category = event.EventCategory
-                # ID of event
-                event_id = winerror.HRESULT_CODE(event.EventID)
-                # Category: File System
-                if event_category == 12800 and filter_id(event_id, list_id):
-                    # Time generated event
-                    event_time = event.TimeGenerated.strftime('%Y-%m-%d %H:%M:%S')
-                    event_computer = str(event.ComputerName)
-                    event_user = event.StringInserts[1]
-                    event_object = event.StringInserts[6]
-
-                    alert_dict['time'] = event_time
-                    alert_dict['user'] = event_user
-                    alert_dict['domain'] = event_computer
-                    alert_dict['resource'] = event_object
-
-                    # A handle was requested.
-                    if event_id == 4656 and has_key(event_object, pending_delete):
-                        # The file was not deleted -> created/modified
-                        pending_delete[event_object]['alive'] = True
-                    # Event 4663 = object access.
-                    elif event_id == 4663:
-                        event_access_mask = event.StringInserts[9]
-                        # 0x10000 = Delete, but this can mean different things - delete, overwrite, rename, move.
-                        if event_access_mask == '0x10000' and not is_contain_str("RECYCLE.BIN", event_object):
-                            # Ignore metadata files in the recycle bin.
-                            if has_key(event_object, pending_delete):
-                                # Is it already in the list?  If so, kick it out and replace it.
-                                # The most recent handle is used to track a moved file.
-                                del pending_delete[event_object]
-                            # Record the filename, username, handle ID, and time.
-                            pending_delete[event_object] = {}
-                            pending_delete[event_object]['user'] = event_user
-                            pending_delete[event_object]['handle_id'] = event.StringInserts[7]
-                            pending_delete[event_object]['time_created'] = event_time
-                            pending_delete[event_object]['alive'] = False
-                            pending_delete[event_object]['confirmed'] = False
-                        # 0x2 = is a classic "object was modified" signal.
-                        if event_access_mask == '0x2' and not is_contain_str("RECYCLE.BIN", event_object):
-                            # Generate report
-                            alert_dict['action'] = ADD_FILE_ACTION_MSG
-                            alert_dict['note'] = '0x2'
-                            print("Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                  % (event_time, event_user, event_computer, ADD_FILE_ACTION_MSG, event_object, "0x2"))
-                            insert_alert_monitor(alert_dict)
-                            # The file was not actually deleted, so remove it from this array.
-                            try:
-                                del pending_delete[event_object]
-                            except (Exception, ValueError):
-                                continue
-                        # A 4663 event with 0x80 (Read Attributes) is logged
-                        # with the same handle ID when files/folders are moved or renamed.
-                        if event_access_mask == '0x80':
-                            for key in pending_delete.keys():
-                                # If the Handle & User match...and the object wasn't deleted...
-                                # figure out whether it was moved or renamed.
-                                if pending_delete[key]['handle_id'] == event.StringInserts[7] \
-                                        and pending_delete[key]['user'] == event_user \
-                                        and event_object != key \
-                                        and not pending_delete[key]['confirmed']:
-                                    # Files moved to a different folder (same filename, different folder)
-                                    if get_file_name(event_object) == get_file_name(key):
-                                        alert_dict['action'] = MOVE_FILE_ACTION_MSG
-                                        alert_dict['note'] = '0x2'
-                                        print(
-                                            "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                            % (
-                                                event_time, event_user, event_computer, MOVE_FILE_ACTION_MSG,
-                                                event_object,
-                                                "0x2"))
-                                        insert_alert_monitor(alert_dict)
-                                        del pending_delete[key]
-                                    # Files moved into the recycle bin
-                                    elif is_contain_str('RECYCLE.BIN', event_object):
-                                        alert_dict['action'] = RECYCLE_FILE_ACTION_MSG
-                                        alert_dict['note'] = '0x2'
-                                        print(
-                                            "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                            % (event_time, event_user, event_computer, RECYCLE_FILE_ACTION_MSG,
-                                               event_object, "0x2"))
-                                        insert_alert_monitor(alert_dict)
-                                        del pending_delete[key]
-                                    # Files moved out of the recycle bin
-                                    elif is_contain_str('RECYCLE.BIN', key):
-                                        alert_dict['action'] = RESTORE_FILE_ACTION_MSG
-                                        alert_dict['note'] = '0x2'
-                                        print(
-                                            "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                            % (event_time, event_user, event_computer, RESTORE_FILE_ACTION_MSG,
-                                               event_object, "0x2"))
-                                        insert_alert_monitor(alert_dict)
-                                        del pending_delete[key]
-                                    # Created / renamed files
-                                    elif get_folder_name(event_object) == get_folder_name(key):
-                                        if get_file_name(key) == "New Folder":
-                                            alert_dict['action'] = ADD_FILE_ACTION_MSG
-                                            alert_dict['note'] = ''
-                                            print(
-                                                "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                                % (event_time, event_user, event_computer, ADD_FILE_ACTION_MSG,
-                                                   event_object, ""))
-                                        else:
-                                            alert_dict['action'] = RENAME_FILE_ACTION_MSG
-                                            alert_dict['note'] = ''
-                                            print(
-                                                "Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                                                % (event_time, event_user, event_computer, RENAME_FILE_ACTION_MSG, key,
-                                                   ""))
-                                            insert_alert_monitor(alert_dict)
-                                        del pending_delete[key]
-                                    break
-                            # If none of those conditions match, at least note that the file still exists (if applicable).
-                            if has_key(event_object, pending_delete):
-                                pending_delete[event_object]['alive'] = True
-                    # Event 4659 = a handle was requested with intent to delete
-                    elif event_id == 4659:
-                        alert_dict['action'] = DELETE_FILE_ACTION_MSG
-                        alert_dict['note'] = ''
-                        print("Time: %s, User: %s, Domain: %s, Action: %s, Resource: %s, AccessMask: %s."
-                              % (event_time, event_user, event_computer, DELETE_FILE_ACTION_MSG, event_object, ""))
-                        insert_alert_monitor(alert_dict)
-                    # This delete confirmation doesn't happen when objects are moved/renamed;
-                    # it does when files are created/deleted/recycled.
-                    elif event_id == 4660:
-                        for key in pending_delete.keys():
-                            # print(event.StringInserts[5], pending_delete[key]['handle_id'])
-                            if pending_delete[key]['handle_id'] == event.StringInserts[5] \
-                                    and pending_delete[key]['user'] == event_user:
-                                pending_delete[key]['confirmed'] = True
-                        # msg = win32evtlogutil.SafeFormatMessage(event, log_type)
-            total = total + len(events)
-        win32evtlog.CloseEventLog(handle)
-        print(total, num_records)
-        msg = "Done read event_log. Scan: " + str(total) + "/" + str(num_records) + "."
-        print(msg)
-        return SUCCESS_CODE, msg
-    except Exception as e:
-        print(e, 123)
-        return ERROR_CODE, "Cannot read windows event_log."
-
-
-def scan_one_audit_log1(path_event_log, backup_flag=False):
-    # path_log = r"C:\Users\Cu Lee\Desktop\Archive-Security-2020-06-25-07-43-43-737\log.txt"
-    flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
-    list_id = [4656, 4663, 4660, 4658, 4659]
+    list_id = [4658, 4663, 4658, 4660, 4659]
+    pending_del = {}
+    alert_temp = init_alert_temp('', '', '', '', '')
     try:
         if backup_flag:
             handle = win32evtlog.OpenBackupEventLog(None, path_event_log)
         else:
             handle = win32evtlog.OpenEventLog(None, "Security")
-
         num_records = win32evtlog.GetNumberOfEventLogRecords(handle)
-        total = 0
+        print(num_records, backup_flag)
+        totals = 0
 
-        # with open(path_log, 'a') as f_out:
-
-        pending_delete = {}
-        alert_dict = {}
         events = 1  # Object
         while events:
             events = win32evtlog.ReadEventLog(handle, flags, 0)
             for event in events:
                 event_category = event.EventCategory
-                # ID of event
                 event_id = winerror.HRESULT_CODE(event.EventID)
                 if filter_id(event_id, list_id) and (event_category == 12800 or event_category == 12812):
-                    # Time generated event
                     event_time = event.TimeGenerated.strftime('%Y-%m-%d %H:%M:%S')
                     event_computer = str(event.ComputerName)
                     event_user = event.StringInserts[1]
@@ -303,64 +147,78 @@ def scan_one_audit_log1(path_event_log, backup_flag=False):
                     if event_id == 4658:
                         event_handle_id = event.StringInserts[5]
                         event_process_id = event.StringInserts[6]
-                        # f_out.write(
-                        #     "%s|%s|%s|%s|%s|%s\n" % (str(event_id) + ": ", event_time, event_computer, event_user,
-                        #                              event_handle_id, event_process_id))
-
-                        if not has_key(event_handle_id, pending_delete):
-                            pending_delete[event_handle_id] = {}
-
+                        if is_has_key(event_handle_id, pending_del.keys()) is False:
+                            pending_del[event_handle_id] = {}
+                            pending_del[event_handle_id]['process_id'] = event_process_id
                     if event_id == 4663:
                         event_object = event.StringInserts[6]
                         event_handle_id = event.StringInserts[7]
+                        event_access_list = event.StringInserts[8]
                         event_access_mask = event.StringInserts[9]
                         event_process_id = event.StringInserts[10]
-                        # f_out.write("%s|%s|%s|%s|%s|%s|%s|%s\n" % ("4663: ", event_time, event_computer, event_user,
-                        #                                            event_object, event_handle_id, event_access_mask,
-                        #                                            event_process_id))
+                        event_process_name = event.StringInserts[11]
 
-                        if has_key(event_handle_id, pending_delete):
-                            if event_access_mask == '0x2':
-                                print(event_time, event_user, " Create: " + event_object)
-                            if event_access_mask == '0x6':
-                                print(event_time, event_user, " Modify: " + event_object)
+                        if is_has_key(event_handle_id, pending_del.keys()):
+                            if event_process_id == pending_del[event_handle_id]['process_id']:
+                                pending_del[event_handle_id]['process_name'] = event_process_name
+                                pending_del[event_handle_id]['object'] = event_object
+                                if is_has_key('access_mask', pending_del[event_handle_id].keys()) is False:
+                                    pending_del[event_handle_id]['access_mask'] = {}
+                                pending_del[event_handle_id]['access_mask'][event_access_mask] = {}
+                                pending_del[event_handle_id]['access_mask'][event_access_mask]['time'] = event_time
+                                pending_del[event_handle_id]['access_mask'][event_access_mask]['access_list'] = event_access_list
+                        else:
+                            pending_del[event_handle_id] = {}
+                            pending_del[event_handle_id]['process_id'] = event_process_id
+                            pending_del[event_handle_id]['process_name'] = event_process_name
+                            pending_del[event_handle_id]['object'] = event_object
+                            pending_del[event_handle_id]['access_mask'] = {}
+                            pending_del[event_handle_id]['access_mask'][event_access_mask] = {}
+                            pending_del[event_handle_id]['access_mask'][event_access_mask]['time'] = event_time
+                            pending_del[event_handle_id]['access_mask'][event_access_mask]['access_list'] = event_access_list
 
+                        if '%%4417' in event_access_list:
+                            is_file = check_is_file(event_object)
+                            if is_file:
+                                if event_access_mask == '0x2':
+                                    insert_alert(alert_temp, event_time, event_computer, event_user, ADD_FILE_ACTION_MSG, event_object, '0x2')
+                                    alert_temp = init_alert_temp(event_time, event_computer, event_user, ADD_FILE_ACTION_MSG, event_object)
+                                else:
+                                    insert_alert(alert_temp, event_time, event_computer, event_user, CHANGE_FILE_ACTION_MSG, event_object, event_access_mask)
+                                    alert_temp = init_alert_temp(event_time, event_computer, event_user, CHANGE_FILE_ACTION_MSG, event_object)
+                        if event_access_mask == '0x10000' or '%%1537' in event_access_list:
+                            is_file = check_is_file(event_object)
+                            # print(is_file, "123")
+                            if is_file:
+                                insert_alert(alert_temp, event_time, event_computer, event_user, DELETE_FILE_ACTION_MSG, event_object, event_access_mask)
+                                alert_temp = init_alert_temp(event_time, event_computer, event_user, DELETE_FILE_ACTION_MSG, event_object)
+                            else:
+                                insert_alert(alert_temp, event_time, event_computer, event_user, DELETE_DIR_ACTION_MSG, event_object, event_access_mask)
+                                alert_temp = init_alert_temp(event_time, event_computer, event_user, DELETE_DIR_ACTION_MSG, event_object)
+                        if event_access_mask == '0x40000' or '%%1539' in event_access_list:
+                            is_file = check_is_file(event_object)
+                            if is_file:
+                                insert_alert(alert_temp, event_time, event_computer, event_user, CHANGE_FILE_ACL, event_object, event_access_mask)
+                                alert_temp = init_alert_temp(event_time, event_computer, event_user, CHANGE_FILE_ACL, event_object)
                     if event_id == 4656:
-                        event_object = event.StringInserts[6]
                         event_handle_id = event.StringInserts[7]
-                        # event_access_mask = event.StringInserts[11]
-                        # event_process_id = event.StringInserts[14]
-
-                        flag_key = False
-                        for key in pending_delete.keys():
-                            if event_handle_id == key:
-                                flag_key = True
-                                break
-
-                        if flag_key is True:
-                            del pending_delete[event_handle_id]
-
-                        # if not has_key(event_object, pending_delete):
-                        #     pending_delete[event_object] = {}
-                        #     pending_delete[event_object]['handle_id'] = event_handle_id
-                        #     # f_out.write(
-                        #     #     "%s|%s|%s|%s|%s|%s|%s|%s\n" % ("4656: ", event_time, event_computer, event_user,
-                        #     #                                    event_object, event_handle_id, event_access_mask,
-                        #     #                                    event_process_id))
-                        # print(pending_delete)
-            total = total + len(events)
+                        event_process_id = event.StringInserts[14]
+                        if is_has_key(event_handle_id, pending_del.keys()) \
+                                and event_process_id == pending_del[event_handle_id]['process_id']:
+                            del pending_del[event_handle_id]
+            totals = totals + len(events)
         win32evtlog.CloseEventLog(handle)
-        msg = "Done read event_log. Scan: " + str(total) + "/" + str(num_records) + "."
+        msg = "Done read Windows Event Logs. Scan: " + str(totals) + "/" + str(num_records) + "."
         print(msg)
+        return SUCCESS_CODE, msg
     except Exception as e:
         print(e)
+        return ERROR_CODE, "Cannot handle Windows Event Logs"
 
 
 # Scan all audit in windows event log
 def scan_all_audit_log():
-    # path_event_dir = PATH_DIR_EVENT_LOG
-    path_event_dir = r"C:\Users\Cu Lee\Desktop"
-
+    path_event_dir = PATH_DIR_EVENT_LOG
     result = check_file_exist(DIR_TYPE, path_event_dir)
     if result == DIR_NOT_FOUND_CODE:
         os.mkdir(path_event_dir)
@@ -371,152 +229,21 @@ def scan_all_audit_log():
             ext_file = os.path.splitext(file_obj)[1]
             # Only handle file event viewer
             if ext_file == '.evtx':
-                path_file = os.path.join(parent_dir, file_obj)
-                print("\nHandle file: " + path_file)
                 if file_obj == "Security.evtx":
-                    scan_one_audit_log(path_file, backup_flag=False)
+                    print("\nHandle file: " + file_obj)
+                    scan_one_audit_log(file_obj, backup_flag=False)
                 else:
+                    path_file = os.path.join(parent_dir, file_obj)
                     p_list_file.append(path_file)
                     scan_one_audit_log(path_file, backup_flag=True)
-            # break
-        break
-    msg = ""
-    # result, msg = compress_file(path_event_dir, p_list_file)
-    # for path_file in p_list_file:
-    #     try:
-    #         os.remove(path_file)
-    #     except Exception as e:
-    #         print(e)
-    #         continue
+        # break
+    # msg = ""
+    # result = SUCCESS_CODE
+    result, msg = compress_file(path_event_dir, p_list_file)
+    for path_file in p_list_file:
+        try:
+            os.remove(path_file)
+        except Exception as e:
+            print(e)
+            continue
     return result, msg
-
-
-# Demo scan event_log
-def scan_event_log(path_log_event):
-    print(path_log_event)
-    # log_type = "Security"
-    # path_log = r"C:\Audit"
-    # # path_log_event = r"C:\Event_Logs\Archive-Security-2020-06-14-08-43-22-478.evtx"
-    # flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
-    # handle = win32evtlog.OpenEventLog(None, log_type)
-    # # handle = win32evtlog.OpenBackupEventLog(None, path_log_event)
-    # num_records = win32evtlog.GetNumberOfEventLogRecords(handle)
-    # total = 0
-    # print(num_records)
-    #
-    # path_csv = path_log + strftime('%y-%m-%d_%H.%M.%S') + ".csv"
-    # list_id = [4656, 4663, 4660, 4659]
-    #
-    # pending_delete = {}
-    # events = 1  # Object
-    # while events:
-    #     events = win32evtlog.ReadEventLog(handle, flags, 0)
-    #     for event in events:
-    #         event_category = event.EventCategory
-    #         # ID of event
-    #         event_id = winerror.HRESULT_CODE(event.EventID)
-    #         # Category: File System
-    #         if event_category == 12800 and filter_id(event_id, list_id):
-    #             # Time generated event
-    #             event_time = event.TimeGenerated.Format("%y-%m-%d %H:%M:%S")
-    #             # Domain
-    #             event_computer = str(event.ComputerName)
-    #             event_user = event.StringInserts[1]
-    #             event_object = event.StringInserts[6]
-    #             # pending_delete[event_object] = {}
-    #             # pending_delete[event_object]['Alive'] = True
-    #
-    #             # A handle was requested.
-    #             if event_id == 4656 and has_key(event_object, pending_delete):
-    #                 # The file was not deleted -> created/modified
-    #                 pending_delete[event_object]['alive'] = True
-    #             # Event 4663 = object access.
-    #             elif event_id == 4663:
-    #                 event_access_mask = event.StringInserts[9]
-    #
-    #                 # 0x10000 = Delete, but this can mean different things - delete, overwrite, rename, move.
-    #                 if event_access_mask == '0x10000' and not is_contain_str("RECYCLE.BIN", event_object):
-    #                     # Ignore metadata files in the recycle bin.
-    #                     if has_key(event_object, pending_delete):
-    #                         # Is it already in the list?  If so, kick it out and replace it.
-    #                         # The most recent handle is used to track a moved file.
-    #                         del pending_delete[event_object]
-    #                     # Record the filename, username, handle ID, and time.
-    #                     pending_delete[event_object] = {}
-    #                     pending_delete[event_object]['user'] = event_user
-    #                     pending_delete[event_object]['handle_id'] = event.StringInserts[7]
-    #                     pending_delete[event_object]['time_created'] = event_time
-    #                     pending_delete[event_object]['alive'] = False
-    #                     pending_delete[event_object]['confirmed'] = False
-    #                     # print(pending_delete)
-    #
-    #                 # 0x2 = is a classic "object was modified" signal.
-    #                 if event_access_mask == '0x2' and not is_contain_str("RECYCLE.BIN", event_object):
-    #                     # Generate report
-    #                     print("User: " + event_user + ", Action: created/modified, Object: " + event_object +
-    #                           ", Time: " + event_time + ", AccessMask: 0x2.")
-    #                     # The file was not actually deleted, so remove it from this array.
-    #                     try:
-    #                         del pending_delete[event_object]
-    #                     except Exception as e:
-    #                         # print(e)
-    #                         continue
-    #
-    #                 # A 4663 event with 0x80 (Read Attributes) is logged
-    #                 # with the same handle ID when files/folders are moved or renamed.
-    #                 if event_access_mask == '0x80':
-    #                     for key in pending_delete.keys():
-    #                         # If the Handle & User match...and the object wasn't deleted...
-    #                         # figure out whether it was moved or renamed.
-    #                         if pending_delete[key]['handle_id'] == event.StringInserts[7] \
-    #                                 and pending_delete[key]['user'] == event_user \
-    #                                 and event_object != key \
-    #                                 and not pending_delete[key]['confirmed']:
-    #                             # Files moved to a different folder (same filename, different folder)
-    #                             if get_file_name(event_object) == get_file_name(key):
-    #                                 print("User: " + event_user + ", Action: moved, Object: " + event_object +
-    #                                       ", Time: " + event_time + ", AccessMask: 0x2.")
-    #                                 del pending_delete[key]
-    #                             # Files moved into the recycle bin
-    #                             elif is_contain_str('RECYCLE.BIN', event_object):
-    #                                 print("User: " + event_user + ", Action: recycled, Object: " + event_object +
-    #                                       ", Time: " + event_time + ", AccessMask: 0x2.")
-    #                                 del pending_delete[key]
-    #                             # Files moved out of the recycle bin
-    #                             elif is_contain_str('RECYCLE.BIN', key):
-    #                                 print("User: " + event_user + ", Action: restored, Object: " + event_object +
-    #                                       ", Time: " + event_time + ", AccessMask: 0x2.")
-    #                                 del pending_delete[key]
-    #                             # Created / renamed files
-    #                             elif get_folder_name(event_object) == get_folder_name(key):
-    #                                 if get_file_name(key) == "New Folder":
-    #                                     print("User: " + event_user + ", Action: created, Object: " + event_object +
-    #                                           ", Time: " + event_time)
-    #                                 else:
-    #                                     print("User: " + event_user + ", Action: renamed, Object: " + key +
-    #                                           ", Time: " + event_time)
-    #                                 del pending_delete[key]
-    #                             break
-    #                     # If none of those conditions match, at least note that the file still exists (if applicable).
-    #                     if has_key(event_object, pending_delete):
-    #                         pending_delete[event_object]['alive'] = True
-    #             # Event 4659 = a handle was requested with intent to delete
-    #             elif event_id == 4659:
-    #                 print("User: " + event_user + ", Action: deleted, Object: " + event_object +
-    #                       ", Time: " + event_time + ", Event: 4659.")
-    #             # This delete confirmation doesn't happen when objects are moved/renamed; it does when files are created/deleted/recycled.
-    #             elif event_id == 4660:
-    #
-    #                 for key in pending_delete.keys():
-    #                     print(event.StringInserts[5], pending_delete[key]['handle_id'])
-    #                     if pending_delete[key]['handle_id'] == event.StringInserts[5] \
-    #                             and pending_delete[key]['user'] == event_user:
-    #                         pending_delete[key]['confirmed'] = True
-    #                 # msg = win32evtlogutil.SafeFormatMessage(event, log_type)
-    #     total = total + len(events)
-    # if num_records == total:
-    #     print("Successfully read all %d records." % num_records)
-    # else:
-    #     print("Couldn't get all records - reported %d, but found %d" % (num_records, total))
-    #     print("(Note that some other app may have written records while we were running!)")
-    pass

@@ -101,12 +101,8 @@ def main():
                 else:
                     print(json.dumps({'result': True, 'check_list': check_list}))
                 return SUCCESS_CODE
-            # else:
-                # return usage_audit_func()
             return SUCCESS_CODE
-        # return usage_audit_func()
     except (Exception, ValueError):
-        # print(e)
         return ERROR_CODE
 
 
