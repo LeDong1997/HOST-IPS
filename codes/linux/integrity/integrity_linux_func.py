@@ -83,9 +83,9 @@ def main_integrity():
                     result, msg = validate_path_sys_check_object(argv[2])
                     if result == SUCCESS_CODE:
                         if msg == SYS_CHECK_OBJECT_XML_FILE:
-                            result = add_sys_check_object_from_xml(argv[2])
+                            result = add_sys_check_object_from_xml_linux(argv[2])
                         elif msg == SYS_CHECK_OBJECT_CSV_FILE:
-                            result = add_sys_check_object_from_csv(argv[2])
+                            result = add_sys_check_object_from_csv_linux(argv[2])
                         check_list = get_list_sys_check_object()
                         print(json.dumps({'result': result == SUCCESS_CODE, 'check_list': check_list}))
                     else:
