@@ -1,6 +1,6 @@
 import winreg
 import hashlib
-from datetime import datetime, timedelta
+from datetime import timedelta
 from codes.databases.integrity_db_func import *
 from codes.databases.registry_db import *
 
