@@ -3,7 +3,7 @@ from codes.systems.os_func import *
 
 def main():
     os_type = os_check()
-    if os_type == WINDOWS_PLATFORM or UNKNOWN_PLATFORM:
+    if os_type == WINDOWS_PLATFORM or os_type == UNKNOWN_PLATFORM:
         from codes.windows.integrity.integrity_windows_func import main_integrity
     else:
         from codes.linux.integrity.integrity_linux_func import main_integrity
