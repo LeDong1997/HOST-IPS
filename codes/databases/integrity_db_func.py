@@ -1,7 +1,10 @@
 from .sqlite3_func import *
 from codes.systems.file_func import *
 
-INTEGRITY_DB_PATH = DB_PATH + "\\integrity.db"
+if os_type == WINDOWS_PLATFORM or os_type == UNKNOWN_PLATFORM:
+    INTEGRITY_DB_PATH = DB_PATH + "\\integrity.db"
+else:
+    INTEGRITY_DB_PATH = DB_PATH + "//integrity.db"
 
 
 # Create integrity database

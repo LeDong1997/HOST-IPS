@@ -1,8 +1,14 @@
 import sqlite3
 import os
+from codes.systems.os_func import *
+
+os_type = os_check()
 
 # Define path of database
-DB_PATH = os.path.dirname(os.path.abspath(__file__)) + "\\..\\..\\databases"
+if os_type == WINDOWS_PLATFORM or os_type == UNKNOWN_PLATFORM:
+    DB_PATH = os.path.dirname(os.path.abspath(__file__)) + "\\..\\..\\databases"
+else:
+    DB_PATH = os.path.dirname(os.path.abspath(__file__)) + "//..//..//databases"
 
 
 # Return conn or None
