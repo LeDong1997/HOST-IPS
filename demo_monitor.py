@@ -4,7 +4,7 @@ from codes.systems.os_func import *
 def main():
     try:
         os_type = os_check()
-        if os_type == WINDOWS_PLATFORM or UNKNOWN_PLATFORM:
+        if os_type == WINDOWS_PLATFORM or os_type == UNKNOWN_PLATFORM:
             import codes.windows.audit.main_audit
         else:
             import codes.linux.audit.main_audit

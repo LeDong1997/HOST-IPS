@@ -74,3 +74,11 @@ Exit project in virtual environment
 Run project in virtual environment
 
 `$ pip install -r requirements_linux.txt`
+
+Install audit library in Linux
+
+`$ sudo apt-get install auditd -y`
+
+Start and enable audit service in the system
+
+`$ sudo systemctl start auditd & sudo systemctl enable auditd`
