@@ -15,7 +15,6 @@ def create_monitor_db():
 
             # Create table storage list file check integrity
             # type : file [0] / dir [1]
-            # state: new_add [0] / added [1]
             sql_query = "CREATE TABLE IF NOT EXISTS monitor_object(" \
                         + "id_object INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " \
                         + "type INTEGER, " \
@@ -28,10 +27,10 @@ def create_monitor_db():
                         + "id_alert INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " \
                         + "time TEXT, " \
                         + "user TEXT, " \
-                        + "domain TEXT, " \
-                        + "action TEXT, " \
+                        + "syscall TEXT, " \
                         + "resource TEXT(260), " \
-                        + "note TEXT)"
+                        + "process TEXT, " \
+                        + "state TEXT)"
             cur.execute(sql_query)
 
             conn.commit()
