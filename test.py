@@ -209,12 +209,16 @@ PATH_AUDIT_LOG = "/var/log/audit/audit.log"
 
 
 def del_event(event_id):
-    with open(PATH_AUDIT_LOG, 'r') as f_in:
-        lines = f_in.readlines()
-    with open(PATH_AUDIT_LOG, 'w') as f_out:
-        for line in lines:
-            if line.strip("\n") != (":" + str(event_id) + "):"):
-                f_out.write(line)
+    key_word = ":" + str(event_id) + "):"
+    try:
+        with open(PATH_AUDIT_LOG, 'r') as f_in:
+            lines = f_in.readlines()
+        with open(PATH_AUDIT_LOG, 'w') as f_out:
+            for line in lines:
+                if line.strip("\n").find(key_word) == -1:
+                    f_out.write(line)
+    except Exception as e:
+        print(e)
 
 
 del_event(568)
