@@ -179,28 +179,42 @@ import os
 # with open(path, 'w+') as f:
 #     f.write('')
 
-import win32evtlog # requires pywin32 pre-installed
+# import win32evtlog # requires pywin32 pre-installed
+#
+# server = 'localhost' # name of the target computer to get event logs
+# logtype = 'Security' # 'Application' # 'Security'
+# hand = win32evtlog.OpenEventLog(server,logtype)
+# flags = win32evtlog.EVENTLOG_BACKWARDS_READ|win32evtlog.EVENTLOG_SEQUENTIAL_READ
+# total = win32evtlog.GetNumberOfEventLogRecords(hand)
+#
+# while True:
+#     events = win32evtlog.ReadEventLog(hand, flags,0)
+#     if events:
+#         for event in events:
+#             print('Event Category:', event.EventCategory)
+#             print('Time Generated:', event.TimeGenerated)
+#             print('Source Name:', event.SourceName)
+#             print('Event ID:', event.EventID)
+#             print('Event Type:', event.EventType)
+#             data = event.StringInserts
+#             if data:
+#                 print('Event Data:')
+#                 for msg in data:
+#                     print(msg)
+#             print("")
+#             break
+#     break
 
-server = 'localhost' # name of the target computer to get event logs
-logtype = 'Security' # 'Application' # 'Security'
-hand = win32evtlog.OpenEventLog(server,logtype)
-flags = win32evtlog.EVENTLOG_BACKWARDS_READ|win32evtlog.EVENTLOG_SEQUENTIAL_READ
-total = win32evtlog.GetNumberOfEventLogRecords(hand)
+PATH_AUDIT_LOG = "/var/log/audit/audit.log"
 
-while True:
-    events = win32evtlog.ReadEventLog(hand, flags,0)
-    if events:
-        for event in events:
-            print('Event Category:', event.EventCategory)
-            print('Time Generated:', event.TimeGenerated)
-            print('Source Name:', event.SourceName)
-            print('Event ID:', event.EventID)
-            print('Event Type:', event.EventType)
-            data = event.StringInserts
-            if data:
-                print('Event Data:')
-                for msg in data:
-                    print(msg)
-            print("")
-            break
-    break
+
+def del_event(event_id):
+    with open(PATH_AUDIT_LOG, 'r') as f_in:
+        lines = f_in.readlines()
+    with open(PATH_AUDIT_LOG, 'w') as f_out:
+        for line in lines:
+            if line.strip("\n") != (":" + str(event_id) + "):"):
+                f_out.write(line)
+
+
+del_event(568)
