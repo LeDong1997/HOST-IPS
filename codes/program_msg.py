@@ -97,3 +97,8 @@ RENAME_FILE_ACTION_MSG = 'Rename'
 MOVE_FILE_ACTION_MSG = 'Move'
 RESTORE_FILE_ACTION_MSG = 'Restore'
 RECYCLE_FILE_ACTION_MSG = 'Recycle'
+
+
+# ----------------------------------- Handle Audit Linux -----------------------------------#
+AUDIT_RULE_LINUX_PATH = "/etc/audit/rules.d/audit.rules"
+PATH_AUDIT_LOG = "/var/log/audit/audit.log"

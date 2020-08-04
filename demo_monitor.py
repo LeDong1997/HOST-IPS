@@ -23,3 +23,4 @@ if __name__ == '__main__':
     # demo_monitor.py -s_a
     # demo_monitor.py -a
     # demo_monitor.py -a_7
+    # demo_monitor.py -l

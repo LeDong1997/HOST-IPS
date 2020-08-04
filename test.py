@@ -19,7 +19,8 @@ def del_event(event_id):
 # del_event(568)
 def read_audit_log(path_file):
     print(path_file)
-    cmd = "ausearch -f " + path_file + " -ts today | aureport -i -f"
+    # cmd = "ausearch -f " + path_file + " -ts today | aureport -i -f"
+    cmd = "ausearch -f " + path_file + " -ts 01/08/2020 10:03:16 | aureport -i -f"
     print(cmd, 123)
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     result = p.stdout.read().decode()
@@ -27,5 +28,5 @@ def read_audit_log(path_file):
     print(1234)
 
 
-path_file = "/home/bkcs/Desktop/dong"
-read_audit_log(path_file)
+path_object = "/home/bkcs/Desktop/dong"
+read_audit_log(path_object)

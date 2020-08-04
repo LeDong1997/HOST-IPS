@@ -27,9 +27,11 @@ def main():
             if argv[1] == '-i':
                 result, error_msg = validate_insert_monitor_object(argv[2], argv[3])
                 if result == SUCCESS_CODE:
-                    result = insert_or_update_monitor_object(argv[2], argv[3])
+                    current_time = datetime.now()
+                    identity = current_time.strftime('%Y_%m_%d_%H_%M_%S')
+                    result = insert_or_update_monitor_object(argv[2], argv[3], identity)
                     if result == SUCCESS_CODE:
-                        result = add_audit_rules(argv[2], argv[3])
+                        result = add_audit_rules(argv[2], identity)
                         if result == ERROR_CODE:
                             remove_monitor_object(argv[2], argv[3])
                     check_list = get_list_monitor_object()
@@ -54,15 +56,15 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'alert_list': alert_list}))
-        elif argc == 3:
-            if argv[1] == '-s':
-                # Scan windows event log with path_event_file
-                # Example: demo_monitor.py -s path_event
-                result, msg = scan_one_audit_log(argv[2], backup_flag=True)
-                if result == SUCCESS_CODE:
-                    print(json.dumps({'result': result == SUCCESS_CODE, 'msg': msg}))
-                else:
-                    print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': msg}))
+        # elif argc == 3:
+        #     if argv[1] == '-s':
+        #         # Scan windows event log with path_event_file
+        #         # Example: demo_monitor.py -s path_event
+        #         result, msg = scan_one_audit_log(argv[2], backup_flag=True)
+        #         if result == SUCCESS_CODE:
+        #             print(json.dumps({'result': result == SUCCESS_CODE, 'msg': msg}))
+        #         else:
+        #             print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': msg}))
         elif argc == 2:
             # Scan all windows event log
             # Example: demo_monitor.py -s_a
