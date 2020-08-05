@@ -253,9 +253,12 @@ def scan_audit_log_by_object(path_object, identity):
     print("\nHandle: " + path_object)
     cmd = "ausearch -f " + path_object + " -k " + identity + " | aureport -i -f"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    lines = p.stdout.read().decode()
-    for line in lines:
+    (output, err) = p.communicate()
+    p.wait()
+    data = str(output).split('\\n')
+    for line in data:
         print(line)
+    # lines = p.stdout.read().decode()
 
 
 # Scan all audit in windows event log
