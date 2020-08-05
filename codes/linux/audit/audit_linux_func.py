@@ -20,7 +20,7 @@ def create_monitor_db():
             sql_query = "CREATE TABLE IF NOT EXISTS monitor_object(" \
                         + "id_object INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " \
                         + "type INTEGER, " \
-                        + "path TEXT(260)" \
+                        + "path TEXT(260), " \
                         + "identity TEXT(260))"
             cur.execute(sql_query)
 
