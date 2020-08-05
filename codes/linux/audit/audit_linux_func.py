@@ -96,7 +96,7 @@ def get_list_monitor_object():
         conn = get_connect_db(MONITOR_DB_PATH)
         with conn:
             cur = conn.cursor()
-            cur.execute("SELECT id_object, type, path " +
+            cur.execute("SELECT id_object, type, path, identity" +
                         "FROM monitor_object")
             return cur.fetchall()
     except sqlite3.Error:
@@ -247,25 +247,29 @@ def read_audit_log(path_file):
     print(1234)
 
 
-def scan_audit_log_by_object(path_object):
-    cmd = "ausearch -f \"" + path_object + "\" | aureport -i -f"
+def scan_audit_log_by_object(path_object, identity):
+    print("\nHandle: " + path_object)
+    cmd = "ausearch -f " + path_object + " -k " + identity + " | aureport -i -f"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    result = p.stdout.read().decode()
-    print(result)
+    lines = p.stdout.read().decode()
+    for line in lines:
+        print(line)
 
 
 # Scan all audit in windows event log
 def scan_all_audit_log():
     check_list = get_list_monitor_object()
+    msg = "Empty monitor object."
     if check_list is None:
-        return SUCCESS_CODE, "Empty monitor object."
+        print(msg)
+        return SUCCESS_CODE, msg
     elif check_list == ERROR_CODE:
         return ERROR_CODE, "Cannot connect database."
 
     try:
         for object_monitor in check_list:
-            print("\nHandle: " + object_monitor[2])
-            scan_audit_log_by_object(object_monitor[2])
+            scan_audit_log_by_object(object_monitor[2], object_monitor[3])
+        return SUCCESS_CODE, "Done analysis audit log."
     except Exception as e:
         print(e)
         return ERROR_CODE, "Cannot handle audit file"
