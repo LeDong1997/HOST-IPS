@@ -96,7 +96,7 @@ def get_list_monitor_object():
         conn = get_connect_db(MONITOR_DB_PATH)
         with conn:
             cur = conn.cursor()
-            cur.execute("SELECT id_object, type, path, identity" +
+            cur.execute("SELECT id_object, type, path, identity " +
                         "FROM monitor_object")
             return cur.fetchall()
     except sqlite3.Error:
