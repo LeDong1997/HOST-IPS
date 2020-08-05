@@ -94,7 +94,7 @@ def get_list_monitor_object():
         conn = get_connect_db(MONITOR_DB_PATH)
         with conn:
             cur = conn.cursor()
-            cur.execute("SELECT id, type, path " +
+            cur.execute("SELECT id_object, type, path " +
                         "FROM monitor_object")
             return cur.fetchall()
     except sqlite3.Error:
@@ -175,7 +175,7 @@ def add_audit_rules(path_object, identity):
         (output, err) = p.communicate()
         p.wait()
         result = str(output).find('error')
-        if result == -1:
+        if result != -1:
             print("Error in add audit permission for object.")
             return ERROR_CODE
         print("Done restart audit service")
@@ -209,7 +209,7 @@ def remove_audit_rules(path_object):
             (output, err) = p.communicate()
             p.wait()
             result = str(output).find('error')
-            if result == -1:
+            if result != -1:
                 print("Error in add audit permission for object.")
                 return ERROR_CODE
             print("Done restart audit service")
@@ -246,7 +246,7 @@ def read_audit_log(path_file):
 
 
 def scan_audit_log_by_object(path_object):
-    cmd = "ausearch -f " + path_object + " | aureport -i -f"
+    cmd = "ausearch -f \"" + path_object + "\" | aureport -i -f"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     result = p.stdout.read().decode()
     print(result)
