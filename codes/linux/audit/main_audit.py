@@ -41,9 +41,9 @@ def main():
             # Remove monitor_object from database
             # Example: demo_monitor.py -r "test.txt" file[0] / directory [1]
             elif argv[1] == '-r':
-                result = remove_audit_rules(argv[2])
+                result = remove_monitor_object(argv[2], argv[3])
                 if result == SUCCESS_CODE:
-                    result = remove_monitor_object(argv[2], argv[3])
+                    result = remove_audit_rules(argv[2])
                     check_list = get_list_monitor_object()
                     print(json.dumps({'result': result == SUCCESS_CODE, 'monitor_list': check_list}))
                 else:

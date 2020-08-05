@@ -79,10 +79,12 @@ def remove_monitor_object(path_object, type_object):
                         "WHERE path = ? AND type = ?", (path_object, type_object))
             if cur.rowcount > 0:
                 print("Remove {} record(s)".format(cur.rowcount))
+                conn.commit()
+                return SUCCESS_CODE
             else:
                 print("The monitor_object don't exist in database.")
-            conn.commit()
-            return SUCCESS_CODE
+                conn.commit()
+                return ERROR_CODE
     except sqlite3.Error:
         print(QUERY_TABLE_DB_ERROR_MSG)
         return ERROR_CODE
