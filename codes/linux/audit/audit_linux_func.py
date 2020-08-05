@@ -256,8 +256,12 @@ def scan_audit_log_by_object(path_object, identity):
     (output, err) = p.communicate()
     p.wait()
     data = str(output).split('\\n')
-    for line in data:
-        print(line)
+    index = 5
+    len_data = len(data)
+    while index < len_data:
+        print(data[index])
+        index += 1
+
     # lines = p.stdout.read().decode()
 
 
