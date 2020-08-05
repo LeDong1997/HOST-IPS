@@ -242,9 +242,11 @@ def read_audit_log(path_file):
     cmd = "ausearch -f " + path_file + " -ts 01/08/2020 10:03:16 | aureport -i -f"
     print(cmd, 123)
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    result = p.stdout.read().decode()
-    print(result)
-    print(1234)
+    (output, err) = p.communicate()
+    p.wait()
+    data = str(output).split('\\n')
+    for line in data:
+        print(line)
 
 
 def scan_audit_log_by_object(path_object, identity):
