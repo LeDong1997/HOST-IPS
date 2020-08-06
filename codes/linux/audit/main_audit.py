@@ -38,6 +38,7 @@ def main():
                     print(json.dumps({'result': result == SUCCESS_CODE, 'monitor_list': check_list}))
                 else:
                     print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': error_msg}))
+                return SUCCESS_CODE
             # Remove monitor_object from database
             # Example: demo_monitor.py -r "test.txt" file[0] / directory [1]
             elif argv[1] == '-r':
@@ -48,6 +49,7 @@ def main():
                     print(json.dumps({'result': result == SUCCESS_CODE, 'monitor_list': check_list}))
                 else:
                     print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': "Error remove sys_check_object"}))
+                return SUCCESS_CODE
             # Get list alert monitor in start_time and end_time
             # Example: demo_monitor.py -a "2020-06-08 10:24:19" "2020-06-17 10:24:19"
             elif argv[1] == '-a':
@@ -56,6 +58,7 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'alert_list': alert_list}))
+                return SUCCESS_CODE
         # elif argc == 3:
         #     if argv[1] == '-s':
         #         # Scan windows event log with path_event_file
@@ -101,8 +104,8 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'check_list': check_list}))
-                return SUCCESS_CODE
             return SUCCESS_CODE
+        return usage_audit_func()
     except (Exception, ValueError):
         return ERROR_CODE
 
