@@ -7,6 +7,26 @@ from codes.systems.file_func import *
 # Handle database
 MONITOR_DB_PATH = DB_PATH + "//monitor.db"
 
+list_event_clear = [
+    'DAEMON_START',
+    'DAEMON_END',
+    'CONFIG_CHANGE',
+    'SERVICE_START',
+    'SERVICE_STOP',
+    'USYS_CONFIG',
+    'USER_LOGIN',
+    'USER_LOGOUT',
+    'USER_AUTH',
+    'USER_START',
+    'USER_END',
+    'USER_CMD',
+    'USER_ACCT',
+    'USER_ROLE_CHANGE',
+    'CRED_REFR',
+    'CRED_ACQ',
+    'CRED_DISP',
+    'LOGIN']
+
 
 # Create monitor database
 def create_monitor_db():
@@ -155,6 +175,23 @@ def get_list_alert_7day_ago(start_time):
         return ERROR_CODE
 
 
+# Insert alert to monitor table
+def insert_alert_monitor(evt_time, user, syscall, resource, process, state):
+    try:
+        conn = get_connect_db(MONITOR_DB_PATH)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO " +
+                        "alert_monitor " +
+                        "VALUES(?, ?, ?, ?, ?, ?, ?)",
+                        (None, evt_time, user, syscall, resource, process, state))
+            conn.commit()
+            return SUCCESS_CODE
+    except sqlite3.Error:
+        print(QUERY_TABLE_DB_ERROR_MSG)
+        return ERROR_CODE
+
+
 # ----------------------------------- Handle Audit Linux -----------------------------------#
 
 # Add new audit rule for file / directory
@@ -169,7 +206,7 @@ def add_audit_rules(path_object, identity):
                 else:
                     if line.strip('\n')[0] == '#':
                         f_out.write(line)
-            new_line = "-w " + path_object + " -p wa -k " + identity
+            new_line = "-w " + path_object + " -p wa -k " + identity + "\n"
             f_out.write(new_line)
 
         cmd = "service auditd restart"
@@ -221,15 +258,44 @@ def remove_audit_rules(path_object):
         return ERROR_CODE
 
 
-def del_event(event_id):
-    key_word = ":" + str(event_id) + "):"
+def del_event(list_event):
     try:
         with open(PATH_AUDIT_LOG, 'r') as f_in:
             lines = f_in.readlines()
         with open(PATH_AUDIT_LOG, 'w') as f_out:
             for line in lines:
-                if line.strip("\n").find(key_word) == -1:
+                flag_find = False
+                for key_word in list_event:
+                    if line.strip("\n").find(key_word) != -1:
+                        flag_find = True
+                        break
+                if flag_find is False:
                     f_out.write(line)
+                else:
+                    print("Remove event: %s." % key_word)
+                    list_event.remove(key_word)
+        print("Done clear all event in audit log.")
+        return SUCCESS_CODE
+    except Exception as e:
+        print(e)
+        return ERROR_CODE
+
+
+def clear_audit_log():
+    print("Start clear audit log.")
+    try:
+        with open(PATH_AUDIT_LOG, 'r') as f_in:
+            lines = f_in.readlines()
+        with open(PATH_AUDIT_LOG, 'w') as f_out:
+            for line in lines:
+                flag_find = False
+                for key_word in list_event_clear:
+                    if line.strip("\n").find(key_word) == 5:
+                        flag_find = True
+                        break
+                if flag_find is False:
+                    f_out.write(line)
+        print("Done clear all event in audit log.")
         return SUCCESS_CODE
     except Exception as e:
         print(e)
@@ -258,11 +324,43 @@ def scan_audit_log_by_object(path_object, identity):
     data = str(output).split('\\n')
     index = 5
     len_data = len(data)
-    while index < len_data:
-        print(data[index])
-        index += 1
+    list_event = []
 
-    # lines = p.stdout.read().decode()
+    while index < len_data:
+        line = data[index].split()
+        if line[0] == '<no':
+            print("The empty data for object.")
+            break
+        else:
+            len_line = len(line)
+            parse_time = line[1].split('/')
+            date = "%s-%s-%s %s" % (parse_time[2], parse_time[1], parse_time[0], line[2])
+            key_word = ":" + str(line[len_line-1]) + "):"
+            list_event.append(key_word)
+            user = line[len_line-2]
+            process = line[len_line-3]
+            state = line[len_line-4]
+            syscall = line[len_line-5]
+            resource = ""
+            for i in range(3, len_line-5):
+                resource += line[i]
+                if i < len_line-6:
+                    resource += " "
+            if resource[0] == '.' and resource[1] == '/' and resource[2] == '.':
+                index += 1
+                continue
+            if resource.find(path_object) == -1:
+                if resource.find('Trash') == -1:
+                    new_resource = path_object + "/" + resource
+                    resource = new_resource
+            if syscall == '?':
+                continue
+            result = insert_alert_monitor(date, user, syscall, resource, process, state)
+            if result == ERROR_CODE:
+                return ERROR_CODE
+            index += 1
+    del_event(list_event)
+    clear_audit_log()
 
 
 # Scan all audit in windows event log
