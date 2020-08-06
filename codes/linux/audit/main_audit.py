@@ -77,6 +77,7 @@ def main():
                     print(json.dumps({'result': result == SUCCESS_CODE, 'msg': msg}))
                 else:
                     print(json.dumps({'result': result == SUCCESS_CODE, 'error_msg': msg}))
+                return SUCCESS_CODE
             # Get all list alert_monitor
             # Example: demo_monitor.py -a
             elif argv[1] == '-a':
@@ -85,6 +86,7 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'alert_list': alert_list}))
+                return SUCCESS_CODE
             # Get list alert monitor by 7 day ago
             # Example: demo_monitor.py -a_7
             elif argv[1] == '-a_7':
@@ -96,6 +98,7 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'alert_list': alert_list}))
+                return SUCCESS_CODE
                 # Get list monitor object from database
                 # Example: demo_integrity.py -l
             elif argv[1] == '-l':
@@ -104,7 +107,8 @@ def main():
                     print(json.dumps({'result': False, 'error_msg': "Cannot connect to database."}))
                 else:
                     print(json.dumps({'result': True, 'check_list': check_list}))
-            return SUCCESS_CODE
+                return SUCCESS_CODE
+            return usage_audit_func()
         return usage_audit_func()
     except (Exception, ValueError):
         return ERROR_CODE
