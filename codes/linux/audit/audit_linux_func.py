@@ -271,8 +271,8 @@ def del_event(list_event):
                         break
                 if flag_find is False:
                     f_out.write(line)
-                else:
-                    print("Remove event: %s." % key_word)
+                # else:
+                    # print("Remove event: %s." % key_word)
         print("Done clear all event in audit log.")
         return SUCCESS_CODE
     except Exception as e:
@@ -314,7 +314,7 @@ def read_audit_log(path_file):
         print(line)
 
 
-def process_stdout_log(path_object, data1, len_data1):
+def process_stdout_log(type_object, path_object, data1, len_data1):
     index = 5
     list_event = []
     len_data = len_data1
@@ -343,10 +343,16 @@ def process_stdout_log(path_object, data1, len_data1):
             if resource[0] == '.' and resource[1] == '/' and resource[2] == '.':
                 index += 1
                 continue
-            if resource.find(path_object) == -1:
-                if resource.find('Trash') == -1:
-                    new_resource = path_object + "/" + resource
-                    resource = new_resource
+            if type_object == DIR_TYPE:
+                if resource.find(path_object) == -1:
+                    if resource.find('Trash') == -1:
+                        new_resource = path_object + "/" + resource
+                        resource = new_resource
+            else:  
+                resource = path_object
+            if resource.find(".swp") != -1:   
+                index += 1
+                continue
             if syscall == '?':
                 index += 1
                 continue
@@ -357,7 +363,7 @@ def process_stdout_log(path_object, data1, len_data1):
     del_event(list_event)
 
 
-def scan_audit_log_by_object(path_object, identity):
+def scan_audit_log_by_object(type_object, path_object, identity):
     print("\nHandle: " + path_object)
     cmd = "ausearch -k " + identity + " | aureport -i -f"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -365,7 +371,7 @@ def scan_audit_log_by_object(path_object, identity):
     p.wait()
     data = str(output).split('\\n')
     len_data = len(data)
-    process_stdout_log(path_object, data, len_data)
+    process_stdout_log(type_object, path_object, data, len_data)
 
     cmd = "ausearch -f " + path_object + " | aureport -i -f"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -373,7 +379,7 @@ def scan_audit_log_by_object(path_object, identity):
     p.wait()
     data2 = str(output).split('\\n')
     len_data2 = len(data2)
-    process_stdout_log(path_object, data2, len_data2)
+    process_stdout_log(type_object, path_object, data2, len_data2)
 
     clear_audit_log()
 
@@ -390,7 +396,7 @@ def scan_all_audit_log():
 
     try:
         for object_monitor in check_list:
-            scan_audit_log_by_object(object_monitor[2], object_monitor[3])
+            scan_audit_log_by_object(object_monitor[1], object_monitor[2], object_monitor[3])
         return SUCCESS_CODE, "Done analysis audit log."
     except Exception as e:
         print(e)
