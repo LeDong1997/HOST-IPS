@@ -82,3 +82,10 @@ Install audit library in Linux
 Start and enable audit service in the system
 
 `$ sudo systemctl start auditd & sudo systemctl enable auditd`
+
+## Database alert for object monitor
+There are 6 columns in table
+
+Time    User    Syscall     Resource    Process     State
+
+"2020-08-07 08:08:29" "bkcs"    "openat"    "/home/bkcs/Desktop/teptin" "/bin/nano" "yes" 
