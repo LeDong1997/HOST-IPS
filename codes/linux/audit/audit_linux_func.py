@@ -273,7 +273,6 @@ def del_event(list_event):
                     f_out.write(line)
                 else:
                     print("Remove event: %s." % key_word)
-                    list_event.remove(key_word)
         print("Done clear all event in audit log.")
         return SUCCESS_CODE
     except Exception as e:
@@ -315,18 +314,13 @@ def read_audit_log(path_file):
         print(line)
 
 
-def scan_audit_log_by_object(path_object, identity):
-    print("\nHandle: " + path_object)
-    cmd = "ausearch -f " + path_object + " -k " + identity + " | aureport -i -f"
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    (output, err) = p.communicate()
-    p.wait()
-    data = str(output).split('\\n')
+def process_stdout_log(path_object, data1, len_data1):
     index = 5
-    len_data = len(data)
     list_event = []
+    len_data = len_data1
+    data = data1
 
-    while index < len_data:
+    while index < len_data - 1:
         line = data[index].split()
         if line[0] == '<no':
             print("The empty data for object.")
@@ -335,16 +329,16 @@ def scan_audit_log_by_object(path_object, identity):
             len_line = len(line)
             parse_time = line[1].split('/')
             date = "%s-%s-%s %s" % (parse_time[2], parse_time[1], parse_time[0], line[2])
-            key_word = ":" + str(line[len_line-1]) + "):"
+            key_word = ":" + str(line[len_line - 1]) + "):"
             list_event.append(key_word)
-            user = line[len_line-2]
-            process = line[len_line-3]
-            state = line[len_line-4]
-            syscall = line[len_line-5]
+            user = line[len_line - 2]
+            process = line[len_line - 3]
+            state = line[len_line - 4]
+            syscall = line[len_line - 5]
             resource = ""
-            for i in range(3, len_line-5):
+            for i in range(3, len_line - 5):
                 resource += line[i]
-                if i < len_line-6:
+                if i < len_line - 6:
                     resource += " "
             if resource[0] == '.' and resource[1] == '/' and resource[2] == '.':
                 index += 1
@@ -354,12 +348,33 @@ def scan_audit_log_by_object(path_object, identity):
                     new_resource = path_object + "/" + resource
                     resource = new_resource
             if syscall == '?':
+                index += 1
                 continue
             result = insert_alert_monitor(date, user, syscall, resource, process, state)
             if result == ERROR_CODE:
                 return ERROR_CODE
-            index += 1
+        index += 1
     del_event(list_event)
+
+
+def scan_audit_log_by_object(path_object, identity):
+    print("\nHandle: " + path_object)
+    cmd = "ausearch -k " + identity + " | aureport -i -f"
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    (output, err) = p.communicate()
+    p.wait()
+    data = str(output).split('\\n')
+    len_data = len(data)
+    process_stdout_log(path_object, data, len_data)
+
+    cmd = "ausearch -f " + path_object + " | aureport -i -f"
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    (output, err) = p.communicate()
+    p.wait()
+    data2 = str(output).split('\\n')
+    len_data2 = len(data2)
+    process_stdout_log(path_object, data2, len_data2)
+
     clear_audit_log()
 
 
@@ -367,7 +382,7 @@ def scan_audit_log_by_object(path_object, identity):
 def scan_all_audit_log():
     check_list = get_list_monitor_object()
     msg = "Empty monitor object."
-    if check_list is None:
+    if len(check_list) == 0:
         print(msg)
         return SUCCESS_CODE, msg
     elif check_list == ERROR_CODE:
